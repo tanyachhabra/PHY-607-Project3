@@ -140,7 +140,7 @@ def plot_magnetization(results_dict):
     plt.title(f'Magnetization vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
     plt.show()
 
-# Other plotting functions remain the same but should include h in the title
+
 def plot_energy(results_dict):
     plt.figure(figsize=(8, 6))
     plt.plot(results_dict['T'], results_dict['E'], 'o-')
@@ -153,7 +153,6 @@ def plot_energy(results_dict):
     plt.title(f'Energy vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
     plt.show()
 
-# [Previous code remains exactly the same until the plotting functions]
 
 def plot_magnetization(results_dict):
     """Plot magnetization"""
@@ -169,18 +168,6 @@ def plot_magnetization(results_dict):
     plt.title(f'Magnetization vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
     plt.show()
 
-def plot_energy(results_dict):
-    """Plot energy"""
-    plt.figure(figsize=(8, 6))
-    plt.plot(results_dict['T'], results_dict['E'], 'o-')
-    plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5,
-                label=f'Critical Temperature (T={CRITICAL_TEMP})')
-    plt.xlabel('Temperature (T)')
-    plt.ylabel('Energy per spin (E)')
-    plt.grid(True)
-    plt.legend()
-    plt.title(f'Energy vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
-    plt.show()
 
 def plot_specific_heat(results_dict):
     """Plot specific heat"""
@@ -239,14 +226,13 @@ if __name__ == "__main__":
     
     results = analyze_system()
     
-    # Plot all observables
+    
     plot_magnetization(results)
-    plot_energy(results)
     plot_specific_heat(results)
     plot_susceptibility(results)
     plot_correlation_length(results)
     
-    # Plot final spin configuration for a specific temperature
+    
     model = IsingModel2D(temperature=2.0, h=MAGNETIC_FIELD)
     model.run_simulation(steps=SIMULATION_STEPS)
     plot_spin_configuration(model)

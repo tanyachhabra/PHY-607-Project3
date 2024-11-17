@@ -4,7 +4,7 @@ from tqdm import tqdm
 from scipy.optimize import curve_fit
 
 class IsingModel2D:
-    def __init__(self, size=20, temperature=2.0, J=1.0):
+    def __init__(self, size=30, temperature=2.0, J=1.0):
         self.size = size
         self.T = temperature
         self.J = J

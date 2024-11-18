@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from scipy.optimize import curve_fit
 
-# Define all parameters upfront
+# Physical Parameters
 LATTICE_SIZE = 20
 TEMPERATURE_RANGE = np.linspace(1.5, 6, 30)
 SIMULATION_STEPS = 500
@@ -23,8 +23,7 @@ class IsingModel2D:
         self.spins = np.random.choice([-1, 1], size=(size, size))
         self.energy = self.calculate_total_energy()
         
-    def calculate_local_energy(self, i, j):
-        """Calculate energy of a single spin with its neighbors and magnetic field"""
+    def calculate_local_energy(self, i, j): #local energy of a spin
         neighbors_sum = (self.spins[i, (j-1)%self.size] + 
                        self.spins[i, (j+1)%self.size] +
                        self.spins[(i-1)%self.size, j] + 
@@ -33,8 +32,8 @@ class IsingModel2D:
         field_energy = -self.h * self.spins[i,j]
         return exchange_energy + field_energy
     
-    def calculate_total_energy(self):
-        """Calculate total energy of the system including magnetic field term"""
+    def calculate_total_energy(self): # total energy of the spin configration
+        #Calculate total energy of the system including magnetic field term
         exchange_energy = np.sum([self.calculate_local_energy(i, j) 
                                 for i in range(self.size) 
                                 for j in range(self.size)]) / 2
@@ -42,7 +41,7 @@ class IsingModel2D:
         return exchange_energy + field_energy
     
     def identify_clusters(self):
-        """Identify clusters using Swendsen-Wang algorithm"""
+        #Identify clusters using Swendsen-Wang algorithm
         # Bond probability
         p = 1 - np.exp(-2 * self.beta * self.J)
         
@@ -63,13 +62,13 @@ class IsingModel2D:
         parent = np.arange(self.size * self.size)
         
         def find_root(x):
-            """Find root label using path compression"""
+            #Find root label using path compression
             if parent[x] != x:
                 parent[x] = find_root(parent[x])
             return parent[x]
         
         def union(x, y):
-            """Union of two clusters"""
+            #Union of two clusters
             root_x = find_root(x)
             root_y = find_root(y)
             if root_x != root_y:
@@ -99,7 +98,7 @@ class IsingModel2D:
         return clusters, current_label
     
     def cluster_flip(self):
-        """Perform one Swendsen-Wang cluster flip step"""
+        #Perform one Swendsen-Wang cluster flip step
         # Identify clusters
         clusters, num_clusters = self.identify_clusters()
         
@@ -136,7 +135,7 @@ class IsingModel2D:
         return correlations
     
     def run_simulation(self, steps=SIMULATION_STEPS, measure_every=MEASUREMENT_INTERVAL):
-        """Run simulation using cluster updates and collect measurements"""
+        #Run simulation using cluster updates and collect measurements
         energies = []
         magnetizations = []
         
@@ -155,9 +154,10 @@ class IsingModel2D:
         
         return np.array(energies), np.array(magnetizations)
 
-# The rest of the code (analyze_system and plotting functions) remains exactly the same
+
+
 def analyze_system(size=LATTICE_SIZE, T_range=TEMPERATURE_RANGE, h=MAGNETIC_FIELD, steps=SIMULATION_STEPS):
-    """Analyze system properties across temperatures with fixed magnetic field"""
+    #Analyze system properties across temperatures with fixed magnetic field
     results = {
         'T': T_range,
         'h': h,
@@ -189,18 +189,48 @@ def analyze_system(size=LATTICE_SIZE, T_range=TEMPERATURE_RANGE, h=MAGNETIC_FIEL
             
     return results
 
-# if __name__ == "__main__":
-#     print(f"Running Ising model analysis with Swendsen-Wang clustering for {LATTICE_SIZE}x{LATTICE_SIZE} lattice...")
-#     print(f"Temperature range: {TEMPERATURE_RANGE[0]:.2f} to {TEMPERATURE_RANGE[-1]:.2f}")
-#     print(f"External magnetic field: {MAGNETIC_FIELD}")
-#     print(f"Number of steps: {SIMULATION_STEPS}")
+def track_thermalization(model, max_steps=1000):
+    #Track energy and magnetization during thermalization
+    energies = []
+    magnetizations = []
     
-#     results = analyze_system()
+    for step in range(max_steps):
+        model.cluster_flip()
+        energies.append(model.energy / (model.size ** 2))  # Normalize energy
+        magnetizations.append(np.mean(model.spins))       # Magnetization
     
+    return np.array(energies), np.array(magnetizations)
+
+def plot_thermalization(energies, magnetizations):
+    # Plot for burn-in 
+    steps = np.arange(len(energies))
+    
+    plt.figure(figsize=(12, 6))
+    
+    # Energy plot
+    plt.subplot(1, 2, 1)
+    plt.plot(steps, energies, label='Energy per Spin', color='blue')
+    plt.xlabel('Steps')
+    plt.ylabel('Energy per Spin')
+    plt.title('Thermalization: Energy vs Steps')
+    plt.grid(True)
+    plt.legend()
+    
+    # Magnetization plot
+    plt.subplot(1, 2, 2)
+    plt.plot(steps, magnetizations, label='Magnetization', color='red')
+    plt.xlabel('Steps')
+    plt.ylabel('Magnetization')
+    plt.title('Thermalization: Magnetization vs Steps')
+    plt.grid(True)
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_magnetization(results_dict):
-    
+    # Plot for magnetization 
     plt.figure(figsize=(8, 6))
     plt.plot(results_dict['T'], results_dict['M'], 'o-')
     plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5, 
@@ -215,7 +245,7 @@ def plot_magnetization(results_dict):
 
 
 def plot_specific_heat(results_dict):
-    """Plot specific heat"""
+    #Plot specific heat
     plt.figure(figsize=(8, 6))
     plt.plot(results_dict['T'], results_dict['C'], 'o-')
     plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5,
@@ -228,7 +258,7 @@ def plot_specific_heat(results_dict):
     plt.show()
 
 def plot_susceptibility(results_dict):
-    """Plot susceptibility"""
+    #Plot susceptibility
     plt.figure(figsize=(8, 6))
     plt.plot(results_dict['T'], results_dict['X'], 'o-')
     plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5,
@@ -241,7 +271,7 @@ def plot_susceptibility(results_dict):
     plt.show()
 
 def plot_correlation_length(results_dict):
-    """Plot correlation length"""
+    #Plot correlation length
     plt.figure(figsize=(8, 6))
     plt.plot(results_dict['T'], results_dict['correlation_length'], 'o-')
     plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5,
@@ -253,7 +283,7 @@ def plot_correlation_length(results_dict):
     plt.title(f'Correlation Length vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
     plt.show()
 def plot_spin_configuration(model):
-    """Plot current spin configuration"""
+    # plot for spin configuration 
     plt.figure(figsize=(6, 6))
     plt.imshow(model.spins, cmap='coolwarm')
     plt.colorbar(label='Spin')
@@ -271,6 +301,7 @@ if __name__ == "__main__":
     results = analyze_system()
     
     
+    # Plots for Observables 
     plot_magnetization(results)
     plot_specific_heat(results)
     plot_susceptibility(results)
@@ -279,4 +310,9 @@ if __name__ == "__main__":
     
     model = IsingModel2D(temperature=2.0, h=MAGNETIC_FIELD)
     model.run_simulation(steps=SIMULATION_STEPS)
+    max_thermalization_steps = 1000
+    energies, magnetizations = track_thermalization(model, max_steps=max_thermalization_steps)
+
+    #Burn-in period plots
+    plot_thermalization(energies, magnetizations)
     plot_spin_configuration(model)

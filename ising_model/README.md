@@ -48,3 +48,8 @@ bash
    pip install dist/ising_model-0.1.0-py3-none-any.whl
 4. run the following command:
    run-ising
+
+##Change of parameters
+To change the parameters, like magnetic field, lattice size, temperature range, number of steps, intervals, please go to ising2d/config/paramters.py
+
+

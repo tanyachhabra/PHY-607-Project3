@@ -1,4 +1,3 @@
-#importing libraries 
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -6,35 +5,32 @@ from scipy.optimize import curve_fit
 
 # Define all parameters upfront
 LATTICE_SIZE = 20
-TEMPERATURE_RANGE = np.linspace(1.5, 6,30 )
+TEMPERATURE_RANGE = np.linspace(1.5, 6, 30)
 SIMULATION_STEPS = 500
 MEASUREMENT_INTERVAL = 10
 THERMALIZATION_FRACTION = 0.2
 CRITICAL_TEMP = 2.27
 J_COUPLING = 1.0
-MAGNETIC_FIELD = 0.1  # External magnetic field strength
+MAGNETIC_FIELD = 0.0
 
 class IsingModel2D:
     def __init__(self, size=LATTICE_SIZE, temperature=2.0, J=J_COUPLING, h=MAGNETIC_FIELD):
         self.size = size
         self.T = temperature
         self.J = J
-        self.h = h  # External magnetic field
+        self.h = h
+        self.beta = 1.0 / temperature
         self.spins = np.random.choice([-1, 1], size=(size, size))
         self.energy = self.calculate_total_energy()
         
     def calculate_local_energy(self, i, j):
         """Calculate energy of a single spin with its neighbors and magnetic field"""
-        # Exchange interaction term
         neighbors_sum = (self.spins[i, (j-1)%self.size] + 
                        self.spins[i, (j+1)%self.size] +
                        self.spins[(i-1)%self.size, j] + 
                        self.spins[(i+1)%self.size, j])
         exchange_energy = -self.J * self.spins[i,j] * neighbors_sum
-        
-        # Magnetic field term
         field_energy = -self.h * self.spins[i,j]
-        
         return exchange_energy + field_energy
     
     def calculate_total_energy(self):
@@ -42,27 +38,95 @@ class IsingModel2D:
         exchange_energy = np.sum([self.calculate_local_energy(i, j) 
                                 for i in range(self.size) 
                                 for j in range(self.size)]) / 2
-        
-        # Add total magnetic field contribution
         field_energy = -self.h * np.sum(self.spins)
-        
         return exchange_energy + field_energy
     
-    def metropolis_step(self):
-        """Perform one Metropolis step"""
-        i, j = np.random.randint(0, self.size, 2)
-        # Delta E includes both exchange and field terms
-        delta_E = -2 * self.calculate_local_energy(i, j)
+    def identify_clusters(self):
+        """Identify clusters using Swendsen-Wang algorithm"""
+        # Bond probability
+        p = 1 - np.exp(-2 * self.beta * self.J)
         
-        if delta_E <= 0 or np.random.random() < np.exp(-delta_E/self.T):
-            self.spins[i,j] *= -1
-            self.energy += delta_E
+        # Initialize bonds arrays
+        horizontal_bonds = np.random.random((self.size, self.size)) < p
+        vertical_bonds = np.random.random((self.size, self.size)) < p
+        
+        # Only keep bonds between parallel spins
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.spins[i,j] != self.spins[i,(j+1)%self.size]:
+                    horizontal_bonds[i,j] = False
+                if self.spins[i,j] != self.spins[(i+1)%self.size,j]:
+                    vertical_bonds[i,j] = False
+        
+        # Label clusters using Hoshen-Kopelman algorithm
+        labels = np.arange(self.size * self.size).reshape(self.size, self.size)
+        parent = np.arange(self.size * self.size)
+        
+        def find_root(x):
+            """Find root label using path compression"""
+            if parent[x] != x:
+                parent[x] = find_root(parent[x])
+            return parent[x]
+        
+        def union(x, y):
+            """Union of two clusters"""
+            root_x = find_root(x)
+            root_y = find_root(y)
+            if root_x != root_y:
+                parent[root_y] = root_x
+        
+        # Connect spins through bonds
+        for i in range(self.size):
+            for j in range(self.size):
+                if horizontal_bonds[i,j]:
+                    union(labels[i,j], labels[i,(j+1)%self.size])
+                if vertical_bonds[i,j]:
+                    union(labels[i,j], labels[(i+1)%self.size,j])
+        
+        # Relabel clusters
+        cluster_map = {}
+        clusters = np.zeros((self.size, self.size), dtype=int)
+        current_label = 0
+        
+        for i in range(self.size):
+            for j in range(self.size):
+                root = find_root(labels[i,j])
+                if root not in cluster_map:
+                    cluster_map[root] = current_label
+                    current_label += 1
+                clusters[i,j] = cluster_map[root]
+                
+        return clusters, current_label
     
-    # Rest of the methods remain the same
+    def cluster_flip(self):
+        """Perform one Swendsen-Wang cluster flip step"""
+        # Identify clusters
+        clusters, num_clusters = self.identify_clusters()
+        
+        # Randomly flip clusters
+        flip_decisions = np.random.choice([-1, 1], size=num_clusters)
+        
+        # Calculate magnetic field contribution
+        if self.h != 0:
+            for cluster_id in range(num_clusters):
+                cluster_mask = (clusters == cluster_id)
+                cluster_size = np.sum(cluster_mask)
+                delta_E = 2 * self.h * self.spins[cluster_mask].sum() * flip_decisions[cluster_id]
+                if delta_E > 0 and np.random.random() > np.exp(-self.beta * delta_E):
+                    flip_decisions[cluster_id] = 1  # Don't flip
+        
+        # Apply flips
+        for cluster_id in range(num_clusters):
+            cluster_mask = (clusters == cluster_id)
+            if flip_decisions[cluster_id] == -1:
+                self.spins[cluster_mask] *= -1
+        
+        # Update energy
+        self.energy = self.calculate_total_energy()
+    
     def calculate_correlation(self, max_distance=None):
         if max_distance is None:
             max_distance = self.size // 2
-            
         correlations = np.zeros(max_distance)
         for r in range(max_distance):
             corr = np.mean([self.spins[i,j] * self.spins[i,(j+r)%self.size]
@@ -70,29 +134,28 @@ class IsingModel2D:
                           for j in range(self.size)])
             correlations[r] = corr
         return correlations
-            
+    
     def run_simulation(self, steps=SIMULATION_STEPS, measure_every=MEASUREMENT_INTERVAL):
-        """Run simulation and collect measurements"""
+        """Run simulation using cluster updates and collect measurements"""
         energies = []
         magnetizations = []
         
         # Thermalization
         thermalization_steps = int(steps * THERMALIZATION_FRACTION)
         for _ in range(thermalization_steps):
-            for _ in range(self.size * self.size):
-                self.metropolis_step()
+            self.cluster_flip()
         
         # Measurement phase
         for step in range(steps):
-            for _ in range(self.size * self.size):
-                self.metropolis_step()
+            self.cluster_flip()
             
             if step % measure_every == 0:
                 energies.append(self.energy/(self.size**2))
-                magnetizations.append(np.mean(self.spins))  # Note: removed abs() to show field direction
+                magnetizations.append(np.mean(self.spins))
         
         return np.array(energies), np.array(magnetizations)
 
+# The rest of the code (analyze_system and plotting functions) remains exactly the same
 def analyze_system(size=LATTICE_SIZE, T_range=TEMPERATURE_RANGE, h=MAGNETIC_FIELD, steps=SIMULATION_STEPS):
     """Analyze system properties across temperatures with fixed magnetic field"""
     results = {
@@ -109,7 +172,7 @@ def analyze_system(size=LATTICE_SIZE, T_range=TEMPERATURE_RANGE, h=MAGNETIC_FIEL
         model = IsingModel2D(size=size, temperature=T, h=h)
         energies, mags = model.run_simulation(steps=steps)
         
-        results['M'][i] = np.mean(mags)  # Note: can be negative now
+        results['M'][i] = np.mean(mags)
         results['E'][i] = np.mean(energies)
         results['C'][i] = (np.var(energies) * size**2) / T**2
         results['X'][i] = (np.var(mags) * size**2) / T
@@ -126,36 +189,18 @@ def analyze_system(size=LATTICE_SIZE, T_range=TEMPERATURE_RANGE, h=MAGNETIC_FIEL
             
     return results
 
-def plot_magnetization(results_dict):
-    """Plot magnetization"""
-    plt.figure(figsize=(8, 6))
-    plt.plot(results_dict['T'], results_dict['M'], 'o-')
-    plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5, 
-                label=f'Critical Temperature (T={CRITICAL_TEMP})')
-    plt.axhline(y=0, color='k', linestyle=':', alpha=0.5)
-    plt.xlabel('Temperature (T)')
-    plt.ylabel('Magnetization (M)')
-    plt.grid(True)
-    plt.legend()
-    plt.title(f'Magnetization vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
-    plt.show()
-
-
-def plot_energy(results_dict):
-    plt.figure(figsize=(8, 6))
-    plt.plot(results_dict['T'], results_dict['E'], 'o-')
-    plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5,
-                label=f'Critical Temperature (T={CRITICAL_TEMP})')
-    plt.xlabel('Temperature (T)')
-    plt.ylabel('Energy per spin (E)')
-    plt.grid(True)
-    plt.legend()
-    plt.title(f'Energy vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
-    plt.show()
+# if __name__ == "__main__":
+#     print(f"Running Ising model analysis with Swendsen-Wang clustering for {LATTICE_SIZE}x{LATTICE_SIZE} lattice...")
+#     print(f"Temperature range: {TEMPERATURE_RANGE[0]:.2f} to {TEMPERATURE_RANGE[-1]:.2f}")
+#     print(f"External magnetic field: {MAGNETIC_FIELD}")
+#     print(f"Number of steps: {SIMULATION_STEPS}")
+    
+#     results = analyze_system()
+    
 
 
 def plot_magnetization(results_dict):
-    """Plot magnetization"""
+    
     plt.figure(figsize=(8, 6))
     plt.plot(results_dict['T'], results_dict['M'], 'o-')
     plt.axvline(x=CRITICAL_TEMP, color='r', linestyle='--', alpha=0.5, 
@@ -207,7 +252,6 @@ def plot_correlation_length(results_dict):
     plt.legend()
     plt.title(f'Correlation Length vs Temperature\n{LATTICE_SIZE}x{LATTICE_SIZE} lattice, h={results_dict["h"]}')
     plt.show()
-
 def plot_spin_configuration(model):
     """Plot current spin configuration"""
     plt.figure(figsize=(6, 6))
@@ -236,4 +280,3 @@ if __name__ == "__main__":
     model = IsingModel2D(temperature=2.0, h=MAGNETIC_FIELD)
     model.run_simulation(steps=SIMULATION_STEPS)
     plot_spin_configuration(model)
-

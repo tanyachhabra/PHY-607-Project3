@@ -1,18 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ising Model Package Documentation</title>
-</head>
-<body>
-    <h1>Overview</h1>
-    <p>
-        This package provides tools for simulating and analyzing the 2D Ising model. It includes functionalities for performing simulations using the Monte Carlo Metropolis algorithm on a cluster of spins. Additionally, it provides functions for analyzing results and visualizing the data.
-    </p>
+##Overview
+This package provides tools for simulating and analyzing 2 dimensional ising model. It includes functionalities for performing simulations using Monte Carlo metropolis algorithm on a cluster of spins. It also includes functions for analyzing reults and visualising the data.
 
-    <h2>File Structure</h2>
-    <pre>
+##FILE STRUCTURE
 ising_model/
 ├── dist/                     # Distribution files for package
 ├── src/                      # Source code
@@ -32,39 +21,25 @@ ising_model/
 │       │   └── parameters.py # Simulation parameters
 │       └── cli/            # Command Line Interface
 │           ├── __init__.py
-│           └── run_simulation.py  # Main simulation script
+│           └── run_simulation.py  # Main simul
 ├── LICENSE.txt            # License file
 ├── README.md             # Project documentation
 ├── pyproject.toml        # Project configuration
-    </pre>
 
-    <h2>Installation</h2>
-    <p>To run this package, follow the steps below:</p>
+##Installation
+To run this package you will follow these steps:
+1. **Create a Virtual Environment**
+   Open your terminal or PowerShell and navigate to the project directory. Create a new virtual environment using:
 
-    <ol>
-        <li>
-            <strong>Create a Virtual Environment</strong><br>
-            Open your terminal or PowerShell and navigate to the project directory. Create a new virtual environment using:
-            <pre><code>python -m venv venv_ising</code></pre>
-        </li>
-        <li>
-            <strong>Activate the Virtual Environment</strong><br>
-            Activate the virtual environment with the following command:
-            <ul>
-                <li>On Windows: <code>.\\venv_ising\\Scripts\\Activate</code></li>
-                <li>On macOS/Linux: <code>source venv_ising/bin/activate</code></li>
-            </ul>
-        </li>
-        <li>
-            <strong>Installing the package</strong><br>
-            Run the following command to install the package:
-            <pre><code>pip install dist/ising_model-0.1.0-py3-none-any.whl</code></pre>
-        </li>
-        <li>
-            <strong>Run the simulation</strong><br>
-            Once installed, run the simulation with the following command:
-            <pre><code>run-ising</code></pre>
-        </li>
-    </ol>
-</body>
-</html>
+   
+bash
+   python -m venv venv_ising
+2. Activate the Virtual Environment Activate the virtual environment with the following command:
+
+    On Windows: .\venv_ising\Scripts\Activate
+    On macOS/Linux: source venv_ising/bin/activate
+3. Installing the package:
+bash
+   pip install dist/ising_model-0.1.0-py3-none-any.whl
+4. run the following command:
+   run-ising

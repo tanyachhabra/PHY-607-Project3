@@ -1,7 +1,9 @@
 ##Overview
+
 This package provides tools for simulating and analyzing 2 dimensional ising model. It includes functionalities for performing simulations using Monte Carlo metropolis algorithm on a cluster of spins. It also includes functions for analyzing reults and visualising the data.
 
 ##FILE STRUCTURE
+
 ising_model/
 ├── dist/                     # Distribution files for package
 ├── src/                      # Source code
@@ -28,16 +30,19 @@ ising_model/
 
 ##Installation
 To run this package you will follow these steps:
+
 1. **Create a Virtual Environment**
    Open your terminal or PowerShell and navigate to the project directory. Create a new virtual environment using:
 
    
 bash
    python -m venv venv_ising
+   
 2. Activate the Virtual Environment Activate the virtual environment with the following command:
 
     On Windows: .\venv_ising\Scripts\Activate
     On macOS/Linux: source venv_ising/bin/activate
+   
 3. Installing the package:
 bash
    pip install dist/ising_model-0.1.0-py3-none-any.whl

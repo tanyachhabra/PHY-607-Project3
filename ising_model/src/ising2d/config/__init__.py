@@ -1,0 +1,23 @@
+"""Configuration module containing simulation parameters."""
+from .parameters import (
+    LATTICE_SIZE,
+    TEMPERATURE_RANGE,
+    SIMULATION_STEPS,
+    MEASUREMENT_INTERVAL,
+    THERMALIZATION_FRACTION,
+    CRITICAL_TEMP,
+    J_COUPLING,
+    MAGNETIC_FIELD
+)
+
+__all__ = [
+    'LATTICE_SIZE',
+    'TEMPERATURE_RANGE',
+    'SIMULATION_STEPS',
+    'MEASUREMENT_INTERVAL',
+    'THERMALIZATION_FRACTION',
+    'CRITICAL_TEMP',
+    'J_COUPLING',
+    'MAGNETIC_FIELD'
+]
+

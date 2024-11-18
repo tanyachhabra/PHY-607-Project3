@@ -1,0 +1,2 @@
+[console_scripts]
+run-simulation = scripts.run_simulation:main

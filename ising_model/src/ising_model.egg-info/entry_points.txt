@@ -1,0 +1,2 @@
+[console_scripts]
+run-ising = ising2d.cli.run_simulation:main

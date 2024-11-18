@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: ising_model
+Version: 0.1.0
+Summary: 2D Ising Model Simulation Package
+Author-email: Tanya Chhabra <tachhabr@syr.edu>, Prakriti Singh <psingh39@syr.edu>, Carlos Enrique Moguel-Lehmer <cmoguell@syr.edu>
+License: MIT
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Requires-Dist: tqdm
+
+#This is a readme file
+
